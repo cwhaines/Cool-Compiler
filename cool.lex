@@ -264,7 +264,7 @@ INVIS = [\001\002\003\004]
 								}
 							}
 <YYINITIAL,COMMENT, STRING> {NEWLINE_CHAR}	{ curr_lineno++; }
-<YYINITIAL,COMMENT> {WHITESPACE}+ { }
+<YYINITIAL,COMMENT> {WHITESPACE}+ { /* Do nothing */ }
 <YYINITIAL> {BAD}|{BADDER}|{INVIS}			{ return new Symbol(TokenConstants.ERROR, "" + yytext() + ""); }
 <STRING> . { /* Do nothing. */ }
 <COMMENT> . { /* Do nothing. */ }
