@@ -39,7 +39,6 @@ import java_cup.runtime.Symbol;
     }
     private boolean in_dash_comment = false;
     private boolean null_string = false;
-    private String temp = "";
     private int curr_string_line = 0;
     int get_curr_string_line() {
     return curr_string_line;
@@ -155,7 +154,7 @@ INVIS = [\001\002\003\004]
 
 <YYINITIAL> "\""		{ 
 							yybegin( STRING );
-							temp = "";
+							string_buf.delete(0, string_buf.length());
 							curr_string_line = 0;
 						}
 <YYINITIAL> "--"		{
@@ -168,14 +167,14 @@ INVIS = [\001\002\003\004]
 
 <STRING> "\""			{
 							yybegin( YYINITIAL );
-							if(temp.length() > MAX_STR_CONST - 1){
+							if(string_buf.length() > MAX_STR_CONST - 1){
 								return new Symbol(TokenConstants.ERROR,
 													"String constant too long");
 							}
 							if(!null_string){
 								null_string = false;
 								return new Symbol(TokenConstants.STR_CONST,
-												AbstractTable.stringtable.addString(temp));
+												AbstractTable.stringtable.addString(string_buf.toString()));
 							}
 						}
 						
@@ -184,22 +183,22 @@ INVIS = [\001\002\003\004]
 							char c = yytext().charAt(1);
 							switch(c){
 							case 'b':
-								temp = temp.concat(Character.toString('\b'));
+								string_buf.append('\b');
 								break;
 							case 't':
-								temp = temp.concat(Character.toString('\t'));
+								string_buf.append('\t');
 								break;
 							case 'n':
-								temp = temp.concat(Character.toString('\n'));
+								string_buf.append('\n');
 								break;
 							case 'f':
-								temp = temp.concat(Character.toString('\f'));
+								string_buf.append('\f');
 								break;
 							case '"':
-								temp = temp.concat("\"");
+								string_buf.append("\"");
 								break;
 							case '\\':
-								temp = temp.concat("\\");
+								string_buf.append("\\");
 								break;
 							default:
 								System.out.println("How did you screw up?");
@@ -212,8 +211,8 @@ INVIS = [\001\002\003\004]
 								return new Symbol(TokenConstants.ERROR, "String contains null character");
 							}
 
-<STRING> {ALPHANUM}|{WHITESPACE}|{GOOD}|{BAD}	{ 
-								temp = temp.concat(yytext());
+<STRING> {ALPHANUM}+|{WHITESPACE}+|{GOOD}|{BAD}	{ 
+								string_buf.append(yytext());
 							}
 
 <STRING> \\{NEWLINE_CHAR}	{	
@@ -221,10 +220,10 @@ INVIS = [\001\002\003\004]
 								char c = yytext().charAt(1);
 								switch(c){
 								case '\015':
-									temp = temp.concat(Character.toString('\015'));
+									string_buf.append('\015');
 									break;
 								case '\n':
-									temp = temp.concat(Character.toString('\n'));
+									string_buf.append('\n');
 									break;
 								default:
 									System.out.println("How did you screw up?");
@@ -236,7 +235,7 @@ INVIS = [\001\002\003\004]
 
 <STRING> {NEWLINE_CHAR}		{
 								yybegin( YYINITIAL );
-								temp = "";
+								string_buf.delete(0, string_buf.length());
 								curr_lineno++;
 								if(!null_string){
 									return new Symbol(TokenConstants.ERROR, "Unterminated string constant");
@@ -266,7 +265,7 @@ INVIS = [\001\002\003\004]
 <YYINITIAL,COMMENT, STRING> {NEWLINE_CHAR}	{ curr_lineno++; }
 <YYINITIAL,COMMENT> {WHITESPACE}+ { /* Do nothing */ }
 <YYINITIAL> {BAD}|{BADDER}|{INVIS}			{ return new Symbol(TokenConstants.ERROR, "" + yytext() + ""); }
-<STRING> . { /* Do nothing. */ }
+
 <COMMENT> . { /* Do nothing. */ }
 <YYINITIAL> .  { /* This rule should be the very last
                                      in your lexical specification and
