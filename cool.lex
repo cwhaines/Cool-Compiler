@@ -39,10 +39,7 @@ import java_cup.runtime.Symbol;
     }
     private boolean in_dash_comment = false;
     private boolean null_string = false;
-    private int curr_string_line = 0;
-    int get_curr_string_line() {
-    return curr_string_line;
-    }
+
 %}
 
 %init{
@@ -155,7 +152,6 @@ INVIS = [\001\002\003\004]
 <YYINITIAL> "\""		{ 
 							yybegin( STRING );
 							string_buf.delete(0, string_buf.length());
-							curr_string_line = 0;
 						}
 <YYINITIAL> "--"		{
 							yybegin( COMMENT );
